@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#03201a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ziele">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>GoalTracker</title>
+<style>
+  :root {
+    --bg: #03201a;
+    --bg-deep: #011410;
+    --card: rgba(12, 52, 43, 0.55);
+    --card-border: rgba(214, 222, 219, 0.13);
+    --text: #eef2f0;
+    --muted: #9fb2aa;
+    --track: rgba(214, 222, 219, 0.10);
+    --silver: #c9d1cd;
+    --silver-hi: #ffffff;
+    --silver-lo: #8a9590;
+    --silver-grad: linear-gradient(180deg, #ffffff 0%, #dde3e0 38%, #97a39e 54%, #e6ebe9 78%, #b7c1bc 100%);
+    --silver-metal: linear-gradient(160deg, #f7f9f8 0%, #c5ceca 45%, #97a39e 55%, #e3e8e6 100%);
+    --gold: #d9b56c;
+    --error: #f2998f;
+    --serif: "Didot", "Bodoni 72", "Bodoni MT", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; background-color: var(--bg-deep); }
+  body {
+    margin: 0;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 700px at 50% -10%, rgba(63, 163, 124, 0.20), transparent 60%),
+      radial-gradient(900px 600px at 100% 100%, rgba(201, 209, 205, 0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background-color: var(--bg-deep);
+    background-attachment: fixed;
+    font: 16px/1.5 var(--sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+    overflow-x: hidden;
+  }
+  /* iOS rendert fixierte Hintergründe unsauber */
+  @supports (-webkit-touch-callout: none) {
+    body { background-attachment: scroll; }
+  }
+
+  /* Silberner Schriftzug */
+  .silver {
+    background: var(--silver-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Hero mit Wappen, Zitat und Countdown */
+  .hero {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: calc(40px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    text-align: center;
+    position: relative;
+  }
+  .crest { width: clamp(118px, 22vw, 168px); margin: 0 0 20px; will-change: transform, opacity; }
+  .crest svg { display: block; width: 100%; height: auto; overflow: visible; animation: crest-in 1.6s cubic-bezier(.22, 1, .36, 1) both; }
+  @keyframes crest-in {
+    from { opacity: 0; transform: translateY(-10px) scale(.92); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+
+  .quote { margin: 0 0 22px; max-width: 30ch; animation: fade-up 1.2s .35s cubic-bezier(.22, 1, .36, 1) both; }
+  .quote blockquote {
+    margin: 0;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(19px, 3.2vw, 28px);
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+  }
+  .ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--silver-lo);
+    font-size: 9px;
+    margin: 0 auto 26px;
+    animation: fade-up 1.2s .5s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  .ornament span { width: 56px; height: 3px; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; opacity: .6; }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .eyebrow {
+    font-family: var(--serif);
+    font-size: clamp(26px, 4.5vw, 44px);
+    letter-spacing: 0.02em;
+    margin: 0 0 6px;
+    animation: fade-up 1.2s .6s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  .date {
+    color: var(--silver);
+    font-size: 12px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    margin: 0 0 34px;
+    animation: fade-up 1.2s .7s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  .countdown {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: clamp(16px, 4vw, 56px);
+    align-items: start;
+    animation: fade-up 1.2s .8s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  .countdown .num {
+    min-width: 1.4em;
+    font-family: var(--serif);
+    font-size: clamp(54px, 11vw, 128px);
+    font-weight: 400;
+    line-height: 1;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .countdown .unit {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .scroll-hint {
+    position: absolute;
+    bottom: calc(28px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: color .3s ease;
+  }
+  .scroll-hint:hover { color: var(--silver-hi); }
+  .scroll-hint svg { animation: float 2.4s ease-in-out infinite; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* Ziele */
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px calc(16px + env(safe-area-inset-right)) calc(120px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  }
+  .section-head { text-align: center; margin: 0 0 28px; }
+  .section-head .ornament { margin: 12px auto 0; animation: none; }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+  .goals { display: grid; gap: 20px; }
+  .goal {
+    position: relative;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 28px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -24px rgba(0, 0, 0, 0.6);
+    transition: border-color .4s ease;
+  }
+  .goal:hover { border-color: rgba(214, 222, 219, 0.28); }
+  /* Glanzstreifen beim Einblenden und bei erreichtem Ziel */
+  .goal::after {
+    content: "";
+    position: absolute;
+    inset: -20% auto -20% 0;
+    width: 45%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.10) 45%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.10) 55%, transparent 100%);
+    transform: translateX(-120%) skewX(-12deg);
+    pointer-events: none;
+  }
+  .goal.visible::after { animation: sheen 1.6s calc(var(--d, 0ms) + 450ms) cubic-bezier(.4, 0, .2, 1) both; }
+  .goal.celebrate::after {
+    background: linear-gradient(100deg, transparent 0%, rgba(217, 181, 108, 0.18) 45%, rgba(255, 232, 170, 0.45) 50%, rgba(217, 181, 108, 0.18) 55%, transparent 100%);
+    animation: sheen 1.3s 0ms cubic-bezier(.4, 0, .2, 1) both;
+  }
+  @keyframes sheen {
+    to { transform: translateX(330%) skewX(-12deg); }
+  }
+
+  .goal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .goal-name { font-family: var(--serif); font-size: 23px; line-height: 1.2; letter-spacing: 0.01em; }
+  .goal-pct {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .goal-value { color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 4px; font-size: 15px; display: inline-block; }
+  .goal-value.bump { animation: bump .45s cubic-bezier(.22, 1, .36, 1); }
+  @keyframes bump {
+    40% { transform: scale(1.08); color: var(--silver-hi); }
+  }
+  .goal.complete .goal-pct { background: linear-gradient(180deg, #fff1c9 0%, var(--gold) 55%, #a8843a 100%); -webkit-background-clip: text; background-clip: text; }
+
+  .bar { height: 6px; background: var(--track); border-radius: 999px; overflow: hidden; margin: 18px 0 22px; }
+  .bar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #7d8984, #e9eeec 85%, #ffffff);
+    box-shadow: 0 0 14px rgba(230, 236, 233, 0.35);
+    transition: width 1.4s cubic-bezier(.22, 1, .36, 1);
+  }
+  .goal.complete .bar-fill {
+    background: linear-gradient(90deg, #a8843a, var(--gold) 80%, #fff1c9);
+    box-shadow: 0 0 16px rgba(217, 181, 108, 0.5);
+  }
+  .spacer { height: 22px; }
+
+  form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  label { color: var(--muted); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; width: 100%; }
+  input {
+    flex: 1 1 80px;
+    min-width: 0;
+    max-width: 160px;
+    padding: 9px 14px;
+    font: inherit;
+    color: var(--text);
+    background: rgba(1, 20, 16, 0.6);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  input:focus { border-color: var(--silver); box-shadow: 0 0 0 3px rgba(201, 209, 205, 0.15); }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--silver-hi); outline-offset: 3px; }
+  .save {
+    padding: 9px 16px;
+    color: var(--silver);
+    background: transparent;
+    border: 1px solid rgba(201, 209, 205, 0.35);
+    border-radius: 12px;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    transition: background .25s ease, color .25s ease, transform .15s ease;
+  }
+  .save:hover { background: rgba(201, 209, 205, 0.1); color: var(--silver-hi); }
+  .save:active { transform: scale(0.97); }
+  .plus {
+    margin-left: auto;
+    min-width: 84px;
+    height: 50px;
+    padding: 0 18px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #0b2a22;
+    background: var(--silver-metal);
+    border: 0;
+    border-radius: 999px;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.18),
+      0 6px 18px -6px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.12);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+    font-variant-numeric: lining-nums tabular-nums;
+    transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), box-shadow .18s ease, filter .2s ease;
+  }
+  .plus:hover { filter: brightness(1.06); }
+  .plus:active { transform: scale(0.92); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3), 0 2px 6px -2px rgba(0, 0, 0, 0.5); }
+  .msg { color: var(--error); font-size: 14px; width: 100%; margin: 4px 0 0; }
+  .msg:empty { display: none; }
+
+  /* Effekte beim Hinzufügen */
+  .float-label {
+    position: absolute;
+    font-family: var(--serif);
+    font-size: 26px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: float-up 1s cubic-bezier(.22, 1, .36, 1) forwards;
+    z-index: 2;
+  }
+  @keyframes float-up {
+    0% { opacity: 0; transform: translate(-50%, -30%) scale(.7); }
+    20% { opacity: 1; transform: translate(-50%, -110%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -260%) scale(1); }
+  }
+  .spark, .confetti {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .spark {
+    width: 5px;
+    height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.8);
+    animation: spark .7s cubic-bezier(.22, 1, .36, 1) forwards;
+  }
+  @keyframes spark {
+    from { opacity: 1; transform: translate(0, 0) scale(1); }
+    to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.2); }
+  }
+  .confetti {
+    width: 6px;
+    height: 10px;
+    border-radius: 1px;
+    animation: confetti 1.5s cubic-bezier(.2, .8, .3, 1) forwards;
+  }
+  @keyframes confetti {
+    from { opacity: 1; transform: translate(0, 0) rotate(0); }
+    to { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)); }
+  }
+
+  /* Rückgängig-Hinweis */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 160%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: calc(100vw - 32px);
+    padding: 10px 10px 10px 18px;
+    background: rgba(6, 34, 28, 0.92);
+    border: 1px solid rgba(201, 209, 205, 0.25);
+    border-radius: 999px;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-size: 14px;
+    white-space: nowrap;
+    visibility: hidden;
+    transition: transform .45s cubic-bezier(.22, 1, .36, 1), visibility 0s .45s;
+    z-index: 10;
+  }
+  .toast.show { transform: translate(-50%, 0); visibility: visible; transition: transform .45s cubic-bezier(.22, 1, .36, 1); }
+  .toast-text { overflow: hidden; text-overflow: ellipsis; color: var(--silver); }
+  .toast-undo {
+    padding: 6px 14px;
+    color: #0b2a22;
+    background: var(--silver-metal);
+    border: 0;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Weiches, gestaffeltes Einblenden beim Scrollen */
+  .reveal { opacity: 0; }
+  .reveal.visible { animation: rise .9s var(--d, 0ms) cubic-bezier(.22, 1, .36, 1) both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(32px) scale(.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (max-width: 560px) {
+    .countdown { grid-template-columns: repeat(2, auto); row-gap: 28px; }
+    .goal { padding: 22px; }
+    .goal-name { font-size: 21px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="crest" id="crest">
+    <svg viewBox="0 0 200 212" role="img" aria-label="Wappen mit Monogramm JK und dem Motto Per Aspera Ad Astra">
+      <defs>
+        <linearGradient id="silver" gradientUnits="userSpaceOnUse" x1="30" y1="0" x2="170" y2="212">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".32" stop-color="#cfd6d3"/>
+          <stop offset=".5" stop-color="#8f9a95"/>
+          <stop offset=".68" stop-color="#e4e9e7"/>
+          <stop offset="1" stop-color="#9ea9a4"/>
+        </linearGradient>
+        <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1b4a3e"/>
+          <stop offset="1" stop-color="#062b22"/>
+        </linearGradient>
+        <!-- Prägung: Licht von oben links, Schatten nach unten -->
+        <filter id="emboss" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="212">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="blur"/>
+          <feSpecularLighting in="blur" surfaceScale="3" specularConstant="0.85" specularExponent="16" lighting-color="#ffffff" result="spec">
+            <feDistantLight azimuth="225" elevation="42"/>
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+          <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="0.4" k4="0" result="lit"/>
+          <feOffset in="SourceAlpha" dx="0" dy="1.6" result="off"/>
+          <feGaussianBlur in="off" stdDeviation="1.1" result="offBlur"/>
+          <feFlood flood-color="#000" flood-opacity="0.6"/>
+          <feComposite in2="offBlur" operator="in" result="shadow"/>
+          <feMerge><feMergeNode in="shadow"/><feMergeNode in="lit"/></feMerge>
+        </filter>
+        <path id="motto-path" d="M36 185.5 Q100 201.5 164 185.5"/>
+      </defs>
+      <g filter="url(#emboss)">
+        <!-- Lorbeer (links per Skript erzeugt, rechts gespiegelt) -->
+        <g id="laurel" fill="url(#silver)" stroke="url(#silver)"></g>
+        <use href="#laurel" transform="matrix(-1 0 0 1 200 0)"/>
+        <!-- Krone -->
+        <g fill="url(#silver)">
+          <path d="M80 44 L76 24 L88 33 L100 17 L112 33 L124 24 L120 44 Z"/>
+          <rect x="79" y="41" width="42" height="5" rx="1"/>
+          <circle cx="76" cy="23" r="2.6"/><circle cx="100" cy="15.5" r="2.8"/><circle cx="124" cy="23" r="2.6"/>
+        </g>
+        <!-- Schild -->
+        <path d="M64 50 H136 V108 C136 142 118 160 100 170 C82 160 64 142 64 108 Z" fill="url(#plate)" stroke="url(#silver)" stroke-width="2.2"/>
+        <path d="M70 56 H130 V108 C130 138 114 154 100 163 C86 154 70 138 70 108 Z" fill="none" stroke="url(#silver)" stroke-width="0.8"/>
+        <text x="100" y="124" text-anchor="middle" fill="url(#silver)" font-family="Didot, 'Bodoni 72', 'Bodoni MT', Georgia, serif" font-size="42" letter-spacing="-1">JK</text>
+        <g fill="url(#silver)">
+          <rect x="84" y="134" width="32" height="0.9"/>
+          <path d="M100 131.5 L102.6 134.45 L100 137.4 L97.4 134.45 Z"/>
+          <path d="M100 68 L102 71 L100 74 L98 71 Z"/>
+        </g>
+        <!-- Band mit Motto -->
+        <g fill="url(#silver)">
+          <path d="M40 180 L25 182 L31 188.5 L25 197 L40 193 Z"/>
+          <path d="M160 180 L175 182 L169 188.5 L175 197 L160 193 Z"/>
+          <path d="M40 178 Q100 194 160 178 L160 193 Q100 209 40 193 Z"/>
+        </g>
+        <text fill="#0b2a22" font-family="Didot, 'Bodoni 72', 'Bodoni MT', Georgia, serif" font-size="6.6" letter-spacing="1.1">
+          <textPath href="#motto-path" startOffset="50%" text-anchor="middle">PER ASPERA AD ASTRA</textPath>
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <figure class="quote">
+    <blockquote class="silver">„Fange an zu tun, dann hast du auch die Kraft dazu!“</blockquote>
+  </figure>
+  <div class="ornament" aria-hidden="true"><span></span>◆<span></span></div>
+
+  <p class="eyebrow silver">Meine Ziele bis:</p>
+  <p class="date">31. Dezember 2027</p>
+  <section class="countdown" aria-label="Verbleibende Zeit">
+    <div><div class="num silver" id="cd-days">0</div><div class="unit">Tage</div></div>
+    <div><div class="num silver" id="cd-hours">0</div><div class="unit">Stunden</div></div>
+    <div><div class="num silver" id="cd-minutes">0</div><div class="unit">Minuten</div></div>
+    <div><div class="num silver" id="cd-seconds">0</div><div class="unit">Sekunden</div></div>
+  </section>
+  <a class="scroll-hint" href="#ziele">
+    Fortschritt
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</header>
+
+<main id="ziele">
+  <div class="section-head reveal">
+    <h2 class="section-title silver">Fortschritt</h2>
+    <div class="ornament" aria-hidden="true"><span></span>◆<span></span></div>
+  </div>
+  <section class="goals" id="goals"></section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="toast-text"></span>
+  <button type="button" class="toast-undo">Rückgängig</button>
+</div>
+
+<script>
+// Stichtag: 31.12.2027 23:59:59 lokale Zeit
+const DEADLINE = new Date(2027, 11, 31, 23, 59, 59);
+
+// Soll-Werte (target: null = kein Soll, nur Zähler); step = Betrag des Plus-Buttons
+const GOALS = [
+  { id: "books",     name: "Bücher gelesen",          target: 12,    unit: "",     whole: true,  step: 1   },
+  { id: "pushups",   name: "Pushups gemacht",         target: 45900, unit: "",     whole: true,  step: 100 }, // 459 Tage × 100
+  { id: "savings",   name: "Geld gespart",            target: 22500, unit: "CHF",  whole: false, step: 500 }, // 15 Monate × 1'500
+  { id: "hustle",    name: "Gewinn Nebenhustle",      target: 40000, unit: "CHF",  whole: false, step: 500 },
+  { id: "countries", name: "Länder bereist",          target: null,  unit: "",     whole: true,  step: 1   },
+];
+
+const STORAGE_KEY = "goaltracker.values";
+const UNDO_MS = 4000;
+
+const numberFmt = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 2 });
+const pctFmt = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 1 });
+
+function percent(value, target) {
+  return target ? (value / target) * 100 : null;
+}
+
+function barWidth(pct) {
+  return Math.max(0, Math.min(100, pct));
+}
+
+// Rundung verhindert Fliesskomma-Reste bei Beträgen mit Rappen
+function addStep(value, step) {
+  return Math.round((value + step) * 100) / 100;
+}
+
+// Liefert eine Fehlermeldung oder null, wenn die Eingabe gültig ist
+function validate(raw, goal) {
+  const text = String(raw).trim().replace(/['’\s]/g, "").replace(",", ".");
+  if (text === "" || !/^-?\d+(\.\d+)?$/.test(text)) return { error: "Bitte eine Zahl eingeben." };
+  const value = Number(text);
+  if (value < 0) return { error: "Der Wert darf nicht negativ sein." };
+  if (goal.whole && !Number.isInteger(value)) return { error: "Bitte eine ganze Zahl eingeben." };
+  return { value };
+}
+
+function countdownParts(now, deadline) {
+  let s = Math.max(0, Math.floor((deadline - now) / 1000));
+  const days = Math.floor(s / 86400); s -= days * 86400;
+  const hours = Math.floor(s / 3600); s -= hours * 3600;
+  const minutes = Math.floor(s / 60);
+  const seconds = s - minutes * 60;
+  return { days, hours, minutes, seconds };
+}
+
+function loadValues() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveValues(values) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function formatAmount(n, goal) {
+  return numberFmt.format(n) + (goal.unit ? " " + goal.unit : "");
+}
+
+function reducedMotion() {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// Balken füllen sich erst, wenn die Karte sichtbar ist
+function applyBar(card) {
+  const fill = card.querySelector(".bar-fill");
+  if (fill && card.classList.contains("visible")) fill.style.width = fill.dataset.width + "%";
+}
+
+function renderText(card, goal, value) {
+  const pct = percent(value, goal.target);
+  card.querySelector(".goal-value").textContent = goal.target
+    ? `${formatAmount(value, goal)} von ${formatAmount(goal.target, goal)}`
+    : formatAmount(value, goal);
+  card.querySelector(".goal-pct").textContent = pct === null ? "" : `${pctFmt.format(pct)} %`;
+}
+
+function renderBar(card, goal, value) {
+  const pct = percent(value, goal.target);
+  const fill = card.querySelector(".bar-fill");
+  if (fill) fill.dataset.width = barWidth(pct);
+  applyBar(card);
+  card.classList.toggle("complete", pct !== null && pct >= 100);
+}
+
+function renderGoal(card, goal, value) {
+  renderText(card, goal, value);
+  renderBar(card, goal, value);
+}
+
+// Zahl zählt sichtbar hoch, Balken gleitet per CSS nach
+function countUp(card, goal, from, to) {
+  renderBar(card, goal, to);
+  const valueEl = card.querySelector(".goal-value");
+  valueEl.classList.remove("bump");
+  void valueEl.offsetWidth;
+  valueEl.classList.add("bump");
+  cancelAnimationFrame(card._raf);
+  const start = performance.now();
+  const frame = (now) => {
+    const t = Math.min(1, (now - start) / 700);
+    const eased = 1 - Math.pow(1 - t, 3);
+    renderText(card, goal, t < 1 ? Math.round(from + (to - from) * eased) : to);
+    if (t < 1) card._raf = requestAnimationFrame(frame);
+  };
+  card._raf = requestAnimationFrame(frame);
+}
+
+// Temporäre Effekt-Elemente entfernen sich nach ihrer Animation selbst
+function spawn(card, className, x, y, styles) {
+  const el = document.createElement("span");
+  el.className = className;
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  for (const k in styles) el.style.setProperty(k, styles[k]);
+  el.addEventListener("animationend", () => el.remove(), { once: true });
+  card.appendChild(el);
+  return el;
+}
+
+function burst(card, button, label) {
+  const c = card.getBoundingClientRect();
+  const b = button.getBoundingClientRect();
+  const x = b.left - c.left + b.width / 2;
+  const y = b.top - c.top + b.height / 2;
+  spawn(card, "float-label silver", x, y - 10, {}).textContent = label;
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.4;
+    const dist = 30 + Math.random() * 28;
+    spawn(card, "spark", x, y, { "--dx": Math.cos(angle) * dist + "px", "--dy": Math.sin(angle) * dist + "px" });
+  }
+}
+
+function celebrate(card) {
+  card.classList.remove("celebrate");
+  void card.offsetWidth;
+  card.classList.add("celebrate");
+  const colors = ["#d9b56c", "#fff1c9", "#e9eeec", "#a8843a", "#ffffff"];
+  const x = card.clientWidth / 2;
+  for (let i = 0; i < 36; i++) {
+    spawn(card, "confetti", x + (Math.random() - 0.5) * 60, 20, {
+      "--dx": (Math.random() - 0.5) * card.clientWidth + "px",
+      "--dy": 60 + Math.random() * (card.clientHeight - 40) + "px",
+      "--r": (Math.random() - 0.5) * 720 + "deg",
+      "background": colors[i % colors.length],
+      "animation-delay": Math.random() * 150 + "ms",
+    });
+  }
+}
+
+let toastTimer;
+function showToast(text, onUndo) {
+  const toast = document.getElementById("toast");
+  toast.querySelector(".toast-text").textContent = text;
+  toast.querySelector(".toast-undo").onclick = () => { onUndo(); hideToast(); };
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, UNDO_MS);
+}
+
+function hideToast() {
+  clearTimeout(toastTimer);
+  document.getElementById("toast").classList.remove("show");
+}
+
+// Linker Lorbeerzweig entlang eines Kreisbogens um den Schild
+function buildLaurel() {
+  const g = document.getElementById("laurel");
+  if (!g) return;
+  const ns = "http://www.w3.org/2000/svg";
+  const cx = 100, cy = 112, r = 64, from = 112, to = 222, pairs = 8;
+  const rad = (d) => (d * Math.PI) / 180;
+  const pt = (d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  const [x0, y0] = pt(from);
+  const [x1, y1] = pt(to);
+  const stem = document.createElementNS(ns, "path");
+  stem.setAttribute("d", `M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}`);
+  stem.setAttribute("fill", "none");
+  stem.setAttribute("stroke-width", "1.4");
+  g.appendChild(stem);
+  const leaf = "M0 0 C2.8-3.6 2.8-9 0-13 C-2.8-9-2.8-3.6 0 0Z";
+  const addLeaf = (d, spread, scale) => {
+    const [x, y] = pt(d);
+    // Tangente in Laufrichtung; das Blatt zeigt standardmässig nach oben
+    const tangent = (Math.atan2(Math.cos(rad(d)), -Math.sin(rad(d))) * 180) / Math.PI;
+    const p = document.createElementNS(ns, "path");
+    p.setAttribute("d", leaf);
+    p.setAttribute("stroke", "none");
+    p.setAttribute("transform", `translate(${x} ${y}) rotate(${tangent + 90 + spread}) scale(${scale})`);
+    g.appendChild(p);
+  };
+  for (let i = 0; i < pairs; i++) {
+    const t = i / pairs;
+    const d = from + (to - from) * t + 4;
+    const scale = 1.15 - 0.4 * t;
+    addLeaf(d, -42, scale);
+    addLeaf(d + 3, 42, scale);
+  }
+  addLeaf(to, 0, 0.75);
+}
+
+function setupReveal() {
+  const items = document.querySelectorAll(".reveal");
+  if (!("IntersectionObserver" in window)) {
+    items.forEach((el) => { el.classList.add("visible"); if (el.classList.contains("goal")) applyBar(el); });
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const el = entry.target;
+      el.classList.add("visible");
+      if (el.classList.contains("goal")) setTimeout(() => applyBar(el), 250 + (parseInt(el.style.getPropertyValue("--d")) || 0));
+      observer.unobserve(el);
+    }
+  }, { threshold: 0.15 });
+  items.forEach((el) => observer.observe(el));
+}
+
+// Wappen gleitet beim Scrollen langsamer mit und blendet aus
+function setupParallax() {
+  if (reducedMotion()) return;
+  const crest = document.getElementById("crest");
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const y = window.scrollY;
+    const h = window.innerHeight;
+    if (y > h) return;
+    const p = y / h;
+    crest.style.transform = `translateY(${y * 0.45}px) scale(${1 - p * 0.25})`;
+    crest.style.opacity = Math.max(0, 1 - p * 1.6);
+  };
+  window.addEventListener("scroll", () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+}
+
+function init() {
+  const values = loadValues();
+  const container = document.getElementById("goals");
+
+  GOALS.forEach((goal, index) => {
+    const value = Number(values[goal.id]) || 0;
+    const card = document.createElement("article");
+    card.className = "goal reveal";
+    card.dataset.goal = goal.id;
+    card.style.setProperty("--d", index * 90 + "ms");
+    card.innerHTML = `
+      <div class="goal-head">
+        <div>
+          <div class="goal-name silver"></div>
+          <div class="goal-value"></div>
+        </div>
+        <span class="goal-pct silver"></span>
+      </div>
+      ${goal.target ? '<div class="bar"><div class="bar-fill"></div></div>' : '<div class="spacer"></div>'}
+      <form novalidate>
+        <label for="in-${goal.id}">Aktueller Stand</label>
+        <input id="in-${goal.id}" type="text" inputmode="decimal" autocomplete="off">
+        <button type="submit" class="save">Speichern</button>
+        <button type="button" class="plus"></button>
+        <p class="msg" role="alert"></p>
+      </form>`;
+    card.querySelector(".goal-name").textContent = goal.name;
+    const input = card.querySelector("input");
+    input.value = value;
+    const msg = card.querySelector(".msg");
+    const stepLabel = "+" + numberFmt.format(goal.step);
+    const plus = card.querySelector(".plus");
+    plus.textContent = stepLabel;
+    plus.setAttribute("aria-label", `${formatAmount(goal.step, goal)} zu „${goal.name}“ hinzufügen`);
+
+    // Einziger Weg, einen Wert zu ändern: speichern, anzeigen, ggf. feiern
+    const setValue = (next, animate) => {
+      const prev = Number(values[goal.id]) || 0;
+      values[goal.id] = next;
+      msg.textContent = saveValues(values) ? "" : "Speichern im Browser nicht möglich.";
+      input.value = next;
+      if (animate && !reducedMotion()) countUp(card, goal, prev, next);
+      else renderGoal(card, goal, next);
+      const before = percent(prev, goal.target);
+      const after = percent(next, goal.target);
+      if (before !== null && before < 100 && after >= 100 && !reducedMotion()) celebrate(card);
+      return prev;
+    };
+
+    card.querySelector("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const result = validate(input.value, goal);
+      if (result.error) {
+        msg.textContent = result.error;
+        return;
+      }
+      setValue(result.value, true);
+    });
+
+    plus.addEventListener("click", () => {
+      const prev = setValue(addStep(Number(values[goal.id]) || 0, goal.step), true);
+      if (!reducedMotion()) burst(card, plus, stepLabel);
+      if (navigator.vibrate) navigator.vibrate(12);
+      showToast(`${stepLabel} · ${goal.name}`, () => setValue(prev, true));
+    });
+
+    renderGoal(card, goal, value);
+    container.appendChild(card);
+  });
+
+  buildLaurel();
+  setupReveal();
+  setupParallax();
+
+  const cd = {
+    days: document.getElementById("cd-days"),
+    hours: document.getElementById("cd-hours"),
+    minutes: document.getElementById("cd-minutes"),
+    seconds: document.getElementById("cd-seconds"),
+  };
+  const tick = () => {
+    const parts = countdownParts(new Date(), DEADLINE);
+    for (const k in cd) cd[k].textContent = parts[k];
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+if (typeof document !== "undefined") init();
+
+// Offline-Nutzung (nur wenn über https ausgeliefert, nicht als lokale Datei)
+if (typeof navigator !== "undefined" && "serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+</body>
+</html>
